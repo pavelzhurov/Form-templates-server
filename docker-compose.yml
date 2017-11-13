@@ -1,0 +1,16 @@
+version: "3"
+services:
+  web:
+    image: test_image
+    ports:
+      - 80:80
+    volumes:
+      - ./:/app
+    links:
+      - mongo
+  mongo:
+    image: mongo
+    ports:
+      - 27017:27017
+    volumes:
+      - ./database/mongo:/data/db
