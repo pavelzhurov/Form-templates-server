@@ -2,6 +2,7 @@ import requests
 import request_generator
 import argparse
 import re
+import json
 
 
 if __name__ == '__main__':
@@ -31,19 +32,20 @@ if __name__ == '__main__':
 		else:
 			request = request_generator.generate_request()
 		r = requests.post("http://localhost/get_form", data=request)
+		dictionary = json.loads(r.text.replace("'", '"'))
+		content = json.dumps(dictionary, indent=4)
 		if args.file is not None:
 			try:
 				# Get all output to it
 				with open(args.file, 'a+') as f:
 					f.write("Request nunmber " + str(i) + "\n")
 					f.write(request + "\n")
-					f.write(r.text + "\n")
+					f.write(content + "\n")
 					f.write("\n")
 			except Exception as err:
 				raise Exception("Error: something occurred while writing in the file!")
 		else:
-			print("Request nunmber ", i)
+			print("Request nunmber " + str(i))
 			print(request)
-			print(r.text)
-			print()
+			print(content)
 

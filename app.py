@@ -1,6 +1,4 @@
 import re
-import json
-import sys
 
 from flask import render_template
 from flask import Flask
