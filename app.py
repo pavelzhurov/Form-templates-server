@@ -59,7 +59,16 @@ def generate(db_size, max_temp_size):
 def show():
 	""" Show database content without ids """ 
 
-	items = db.inventory.find({})
+	items = db.inventory.find(
+		{"$and":
+			[
+				{"worker_name":  {'$exists': True}}, 
+			 	{"client_phone":  {'$exists': True}},
+			 	{"purchase_date":  {'$exists': True}}
+			]
+		}
+	)
+	# items = db.inventory.find({})
 	page = ""
 	for item in items:
 		item.pop('_id')
@@ -106,8 +115,13 @@ def get_form():
 		# If wrong date, it will be returned as text type
 		return 'text'
 
+	def make_query(values):
+		items = list()
+		for value in values:
+			items.append({ value: { '$exists': True } })
+		return { "$and": items }
+
 	fields = (request.data.decode("utf-8")).split("&")
-	# return fields[0] + " " + fields[1] + " " + fields[2] + " "
 	wrong_field = False
 	template_found = False
 	fields_dict = {}
@@ -129,41 +143,21 @@ def get_form():
 	if wrong_field:
 		return str(fields_dict)
 
-	# Get all items from database
-	items = db.inventory.find({})
-	found = False
-	templates = list()
-	for item in items:
-		# Add name and id keys to fields keys
-		fields_keys = list(fields_dict.keys())
-		fields_keys.append("name")
-		fields_keys.append("_id")
-		if set(item.keys()).issubset(set(fields_keys)):
-			for key in item.keys():
-				# Skip name and id keys
-				if key == "name" or key == "_id":
-					continue
-				if item[key] != fields_dict[key]:
-					# If we found wrong value break
-					# So, if at least one wrong value is found, we can't get ELSE BREAK
-					break
-			else:
-				# ELSE BREAK
-				# If we get here, it means that template found
-				# return template with discarted id
-				templates.append(item)
-				found = True
-	
-	if found:
-		max_len = 0
-		for choosen_item in templates:
-			if len(choosen_item.keys()) > max_len:
-				max_len = len(choosen_item.keys())
-				choosen_item.pop("_id")
-				result_item = choosen_item
+	# Get necessary items from database
+	import sys
+	items = db.inventory.find(make_query(list(fields_dict.keys())))
+	'''for item in items:
+		print(item, file=sys.stderr)'''
+	max_len = 0
+	for choosen_item in items:
+		if len(choosen_item.keys()) > max_len:
+			max_len = len(choosen_item.keys())
+			choosen_item.pop("_id")
+			result_item = choosen_item
 
-		return "Teplate found: " + str(result_item)
-		
+	if max_len != 0: 
+		return "Template found: " + str(result_item)
+	
 	return str(fields_dict)
 		
 @app.route('/')

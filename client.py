@@ -32,7 +32,13 @@ if __name__ == '__main__':
 		else:
 			request = request_generator.generate_request()
 		r = requests.post("http://localhost/get_form", data=request)
-		dictionary = json.loads(r.text.replace("'", '"'))
+		found_message = False
+		if re.match("Template found: .*", r.text):
+			text = re.sub("Template found: (.*)", r"\1", r.text)
+			found_message = True
+		else:
+			text = r.text
+		dictionary = json.loads(text.replace("'", '"'))
 		content = json.dumps(dictionary, indent=4)
 		if args.file is not None:
 			try:
@@ -40,6 +46,10 @@ if __name__ == '__main__':
 				with open(args.file, 'a+') as f:
 					f.write("Request nunmber " + str(i) + "\n")
 					f.write(request + "\n")
+					if found_message:
+						f.write("Template was found!" + "\n")
+					else:
+						f.write("No such template" + "\n")
 					f.write(content + "\n")
 					f.write("\n")
 			except Exception as err:
@@ -47,5 +57,9 @@ if __name__ == '__main__':
 		else:
 			print("Request nunmber " + str(i))
 			print(request)
+			if found_message:
+				print("Template was found!")
+			else:
+				print("No such template")
 			print(content)
 
